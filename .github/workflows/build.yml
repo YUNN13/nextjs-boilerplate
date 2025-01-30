@@ -1,15 +1,40 @@
 # ワークフローの名前を定義する
-name: check build
+name: check build # ないとパスが表示、あると名前が表示される
 
 # ワークフローの実行方法を定義する
 on:
-  pull_request:
+  pull_request: # プルリクエストが作成された時
+    types:
+      - opened # プルリクエストが作成された時
+      - synchronize # プルリクエストが更新された時
 
 # ワークフローで行う処理を定義する
 jobs:
-  # 処理の名前を定義
+  # 処理の名前を定義 - 好きな名前つけて良い
   build:
     # 実行環境や諸々の設定を定義
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # 一番安い
+    timeout-minutes: 10 # タイムアウト時間を定義 - 料金のため設定した方が良い（無限に回らないように）
+    concurrency: # 同時実行を防ぐ
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    # 実際に行う処理のステップを記載
+    steps:
+      # リポジトリのコードをチェックアウトする（クロンみたいな）
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # GitHubのトークンを使用する
 
-  # 実際に行う処理のステップを記載
+      # Node.jsのセットアップ
+      - uses: actions/setup-node@v4
+        with:
+          # volta.nodeを参照
+          node-version-file: package.json
+
+      # npm moduleのインストール
+      - name: npm install
+        run: npm ci
+
+      # ビルド
+      - name: next build
+        run: npm run build
