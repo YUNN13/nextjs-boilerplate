@@ -32,9 +32,6 @@ jobs:
       - name: npm install
         run: npm ci
 
-      - name: docs npm install
-        run: npm ci --prefix docs
-
       # ビルド
       - name: next build
         run: npm run build
